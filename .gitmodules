@@ -1,0 +1,9 @@
+[submodule "src/Point_LIO"]
+	path = src/Point_LIO
+	url = https://github.com/gaohaojia/Sensebeetle_Client-Point_LIO
+[submodule "src/FAST_LIO"]
+	path = src/FAST_LIO
+	url = https://github.com/gaohaojia/Sensebeetle_Client-FAST_LIO
+[submodule "src/livox_ros_driver2"]
+	path = src/livox_ros_driver2
+	url = https://github.com/gaohaojia/Sensebeetle_Client-Livox_ROS_Driver2
