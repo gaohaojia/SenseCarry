@@ -28,9 +28,9 @@ Visualization Manager:
     - Class: rviz_default_plugins/Axes
       Enabled: true
       Length: 1
-      Name: Vehicle
+      Name: Base_Link_Axes
       Radius: 0.10000000149011612
-      Reference Frame: vehicle
+      Reference Frame: lio_base_link
       Value: true
     - Class: rviz_default_plugins/Image
       Enabled: true
@@ -76,7 +76,7 @@ Visualization Manager:
         Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /registered_scan
+        Value: /cloud_registered
       Use Fixed Frame: true
       Use rainbow: true
       Value: true
@@ -245,21 +245,6 @@ Visualization Manager:
       Use rainbow: true
       Value: true
     - Alpha: 1
-      Class: rviz_default_plugins/PointStamped
-      Color: 204; 41; 204
-      Enabled: true
-      History Length: 1
-      Name: Waypoint
-      Radius: 0.30000001192092896
-      Topic:
-        Depth: 5
-        Durability Policy: Volatile
-        Filter size: 10
-        History Policy: Keep Last
-        Reliability Policy: Reliable
-        Value: /local_way_point
-      Value: true
-    - Alpha: 1
       Class: rviz_default_plugins/Polygon
       Color: 0; 255; 0
       Enabled: true
@@ -416,13 +401,6 @@ Visualization Manager:
   Name: root
   Tools:
     - Class: rviz_default_plugins/MoveCamera
-    - Class: waypoint_rviz_plugin/WaypointTool
-      Topic:
-        Depth: 5
-        Durability Policy: Volatile
-        History Policy: Keep Last
-        Reliability Policy: Reliable
-        Value: waypoint
   Transformation:
     Current:
       Class: rviz_default_plugins/TF

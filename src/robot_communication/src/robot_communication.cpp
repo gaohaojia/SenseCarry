@@ -53,7 +53,7 @@ RobotCommunicationNode::RobotCommunicationNode(const rclcpp::NodeOptions & optio
   this->get_parameter("network_ip", ip);
 
   registered_scan_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
-    "registered_scan",
+    "cloud_registered",
     5,
     std::bind(&RobotCommunicationNode::RegisteredScanCallBack, this, std::placeholders::_1));
   way_point_sub_ = this->create_subscription<geometry_msgs::msg::PointStamped>(
@@ -186,11 +186,11 @@ void RobotCommunicationNode::TFUpdateThread()
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     try {
       transformStamped = tf_buffer_->lookupTransform(
-        "map", "vehicle", tf2::TimePointZero, tf2::durationFromSec(10.0));
+        "map", "lio_base_link", tf2::TimePointZero, tf2::durationFromSec(10.0));
     } catch (...) {
       continue;
     }
-    transformStamped.child_frame_id = "robot_" + std::to_string(robot_id) + "/vehicle";
+    transformStamped.child_frame_id = "robot_" + std::to_string(robot_id) + "/base_link";
     data_buffer = SerializeMsg<geometry_msgs::msg::TransformStamped>(transformStamped);
     PrepareBuffer pthread_buffer = {robot_id, data_buffer, 2};
   if (prepare_buffer_queue.size() >= MAX_BUFFER_QUEUE_SIZE) {

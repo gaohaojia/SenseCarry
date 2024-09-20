@@ -1,8 +1,7 @@
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, TimerAction
+from launch.actions import TimerAction
 from launch_ros.actions import Node
-from launch.substitutions import LaunchConfiguration
 import os
 import yaml
 
@@ -12,6 +11,7 @@ def generate_launch_description():
         get_package_share_directory("lidar_transform"),
         "config",
         "lidar_transform_params.yaml",
+        # "lidar_transform_params_v3.yaml",
     )
     with open(params_file, "r") as file:
         offset_params = yaml.safe_load(file)["lidar_transform"]["ros__parameters"]
@@ -29,11 +29,7 @@ def generate_launch_description():
         name="lidar_transform",
         output="screen",
         parameters=[
-            os.path.join(
-                get_package_share_directory("lidar_transform"),
-                "config",
-                "lidar_transform_params.yaml",
-            ),
+            params_file
         ],
     )
 
@@ -54,7 +50,7 @@ def generate_launch_description():
         package="tf2_ros",
         executable="static_transform_publisher",
         name="idMapTransPublisher",
-        arguments=[*offsetList_str, "lidar", "imu_link"],
+        arguments=[*offsetList_str, "base_link", "lidar"],
     )
 
     ld = LaunchDescription()
