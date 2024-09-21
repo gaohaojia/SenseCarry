@@ -23,7 +23,6 @@
 #include <rclcpp/serialization.hpp>
 #include <rclcpp/serialized_message.hpp>
 #include <rclcpp/utilities.hpp>
-#include <sensor_msgs/msg/detail/point_cloud2__struct.hpp>
 #include <string>
 #include <tf2_eigen/tf2_eigen.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
@@ -57,10 +56,11 @@ RobotCommunicationNode::RobotCommunicationNode(
     "way_point", 2,
     std::bind(&RobotCommunicationNode::WayPointCallBack, this,
               std::placeholders::_1));
-  realsense_pointcloud_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
-    "camera/camera/depth/color/points", 2,
-    std::bind(&RobotCommunicationNode::RealsensePointCallBack, this,
-              std::placeholders::_1));
+  realsense_pointcloud_sub_ =
+    this->create_subscription<sensor_msgs::msg::PointCloud2>(
+      "camera/camera/depth/color/points", 2,
+      std::bind(&RobotCommunicationNode::RealsensePointCallBack, this,
+                std::placeholders::_1));
 
   local_way_point_pub_ =
     this->create_publisher<geometry_msgs::msg::PointStamped>("local_way_point",
