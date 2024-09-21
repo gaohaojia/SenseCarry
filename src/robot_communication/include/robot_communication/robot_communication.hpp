@@ -17,6 +17,7 @@
 #include <rclcpp/node_options.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp/subscription.hpp>
+#include <sensor_msgs/msg/detail/point_cloud2__struct.hpp>
 #include <thread>
 #include <vector>
 
@@ -83,8 +84,8 @@ class RobotCommunicationNode : public rclcpp::Node {
     const sensor_msgs::msg::PointCloud2::ConstSharedPtr registered_scan_msg);
   void StateEstimationAtScanCallBack(
     const nav_msgs::msg::Odometry::ConstSharedPtr state_estimation_at_scan_msg);
-  void RealsenseImageCallBack(
-    const sensor_msgs::msg::Image::ConstSharedPtr image_msg);
+  void RealsensePointCallBack(
+    const sensor_msgs::msg::PointCloud2::ConstSharedPtr realsense_pointcloud_msg);
 
   void WayPointCallBack(
     const geometry_msgs::msg::PointStamped::ConstSharedPtr way_point_msg);
@@ -104,7 +105,7 @@ class RobotCommunicationNode : public rclcpp::Node {
     state_estimation_at_scan_sub_;
   rclcpp::Subscription<geometry_msgs::msg::PointStamped>::SharedPtr
     way_point_sub_;
-  rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr realsense_image_sub_;
+  rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr realsense_pointcloud_sub_;
 
   rclcpp::Publisher<geometry_msgs::msg::PointStamped>::SharedPtr
     local_way_point_pub_;

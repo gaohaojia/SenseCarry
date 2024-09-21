@@ -23,6 +23,7 @@
 #include <rclcpp/serialization.hpp>
 #include <rclcpp/serialized_message.hpp>
 #include <rclcpp/utilities.hpp>
+#include <sensor_msgs/msg/detail/point_cloud2__struct.hpp>
 #include <string>
 #include <tf2_eigen/tf2_eigen.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
@@ -56,9 +57,9 @@ RobotCommunicationNode::RobotCommunicationNode(
     "way_point", 2,
     std::bind(&RobotCommunicationNode::WayPointCallBack, this,
               std::placeholders::_1));
-  realsense_image_sub_ = this->create_subscription<sensor_msgs::msg::Image>(
-    "camera/camera/color/image_raw", 2,
-    std::bind(&RobotCommunicationNode::RealsenseImageCallBack, this,
+  realsense_pointcloud_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
+    "camera/camera/depth/color/points", 2,
+    std::bind(&RobotCommunicationNode::RealsensePointCallBack, this,
               std::placeholders::_1));
 
   local_way_point_pub_ =
@@ -164,10 +165,10 @@ void RobotCommunicationNode::RegisteredScanCallBack(
   prepare_buffer_queue.push(pthread_buffer);
 }
 
-void RobotCommunicationNode::RealsenseImageCallBack(
-  const sensor_msgs::msg::Image::ConstSharedPtr image_msg) {
+void RobotCommunicationNode::RealsensePointCallBack(
+  const sensor_msgs::msg::PointCloud2::ConstSharedPtr image_msg) {
   std::vector<uint8_t> data_buffer =
-    SerializeMsg<sensor_msgs::msg::Image>(*image_msg);
+    SerializeMsg<sensor_msgs::msg::PointCloud2>(*image_msg);
   PrepareBuffer pthread_buffer = {robot_id, data_buffer, 1};
   if (prepare_buffer_queue.size() >= MAX_BUFFER_QUEUE_SIZE) {
     return;
