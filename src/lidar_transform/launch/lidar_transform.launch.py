@@ -11,7 +11,6 @@ def generate_launch_description():
         get_package_share_directory("lidar_transform"),
         "config",
         "lidar_transform_params.yaml",
-        # "lidar_transform_params_v3.yaml",
     )
     with open(params_file, "r") as file:
         offset_params = yaml.safe_load(file)["lidar_transform"]["ros__parameters"]
@@ -50,7 +49,7 @@ def generate_launch_description():
         package="tf2_ros",
         executable="static_transform_publisher",
         name="idMapTransPublisher",
-        arguments=[*offsetList_str, "base_link", "lidar"],
+        arguments=[*offsetList_str, "lio_base_link", "lidar"],
     )
 
     ld = LaunchDescription()
