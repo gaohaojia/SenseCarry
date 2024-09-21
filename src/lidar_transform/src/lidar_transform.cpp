@@ -12,7 +12,7 @@ LidarTransform::LidarTransform(const rclcpp::NodeOptions& options)
   while (rclcpp::ok()) {
     try {
       geometry_msgs::msg::TransformStamped transform_stamped =
-        tf_buffer_->lookupTransform("base_link", "lidar", tf2::TimePointZero);
+        tf_buffer_->lookupTransform("lio_base_link", "lidar", tf2::TimePointZero);
 
       tf2::fromMsg(transform_stamped.transform, frame_transform);
       break;
