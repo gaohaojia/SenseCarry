@@ -166,9 +166,26 @@ void RobotCommunicationNode::RegisteredScanCallBack(
 }
 
 void RobotCommunicationNode::RealsensePointCallBack(
-  const sensor_msgs::msg::PointCloud2::ConstSharedPtr image_msg) {
+  const sensor_msgs::msg::PointCloud2::ConstSharedPtr realsense_pointcloud_msg) {
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr pointcloud_tmp(
+    new pcl::PointCloud<pcl::PointXYZRGB>());
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr pointcloud_result(
+    new pcl::PointCloud<pcl::PointXYZRGB>());
+  pcl::fromROSMsg(*realsense_pointcloud_msg, *pointcloud_tmp);
+  try {
+    pcl::transformPointCloud(*pointcloud_tmp, *pointcloud_result,
+                             local_to_global);
+  } catch (const tf2::TransformException &ex) {
+    RCLCPP_INFO(this->get_logger(), "%s", ex.what());
+    return;
+  }
+  sensor_msgs::msg::PointCloud2 totalRegisteredScan;
+  pcl::toROSMsg(*pointcloud_result, totalRegisteredScan);
+  totalRegisteredScan.header.stamp = realsense_pointcloud_msg->header.stamp;
+  totalRegisteredScan.header.frame_id = "map";
+
   std::vector<uint8_t> data_buffer =
-    SerializeMsg<sensor_msgs::msg::PointCloud2>(*image_msg);
+    SerializeMsg<sensor_msgs::msg::PointCloud2>(totalRegisteredScan);
   PrepareBuffer pthread_buffer = {robot_id, data_buffer, 1};
   if (prepare_buffer_queue.size() >= MAX_BUFFER_QUEUE_SIZE) {
     return;
