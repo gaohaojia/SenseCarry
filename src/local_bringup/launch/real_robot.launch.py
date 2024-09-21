@@ -11,7 +11,6 @@ from launch.conditions import LaunchConfigurationEquals
 
 def generate_launch_description():
     robot_id = LaunchConfiguration("robot_id")
-    checkTerrainConn = LaunchConfiguration("checkTerrainConn")
 
     declare_robot_id = DeclareLaunchArgument(
         "robot_id", default_value="0", description=""
@@ -42,7 +41,7 @@ def generate_launch_description():
                     "rs_launch.py",
                 )
             ),
-            launch_arguments={"rgb_camera.color_profile": "640x480x30"}.items(),
+            launch_arguments={"pointcloud.enable": "true"}.items(),
             condition=LaunchConfigurationEquals("realsense_mode", "rs_d435"),
         )
     except:
