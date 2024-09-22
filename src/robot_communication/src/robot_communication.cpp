@@ -242,13 +242,12 @@ void RobotCommunicationNode::TFUpdateThread() {
 
     Eigen::Matrix4d odom_to_map_matrix =
       odom_to_local_matrix * local_to_global_matrix;
-    geometry_msgs::msg::TransformStamped transformStamped;
-    transformStamped.header.stamp = this->get_clock()->now();
+    Eigen::Affine3d tmp(odom_to_map_matrix);
+    geometry_msgs::msg::TransformStamped transformStamped = tf2::eigenToTransform(tmp);
     transformStamped.header.frame_id = MAP_FRAME;
     transformStamped.child_frame_id =
       "robot_" + std::to_string(robot_id) + "/base_link";
-    Eigen::Affine3d tmp(odom_to_map_matrix);
-    transformStamped = tf2::eigenToTransform(tmp);
+    transformStamped.header.stamp = this->get_clock()->now();
     std::vector<uint8_t> data_buffer =
       SerializeMsg<geometry_msgs::msg::TransformStamped>(transformStamped);
     PrepareBuffer pthread_buffer = {robot_id, data_buffer, 2};
