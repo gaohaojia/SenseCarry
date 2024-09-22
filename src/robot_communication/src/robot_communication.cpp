@@ -1,3 +1,5 @@
+#include "robot_communication/robot_communication.hpp"
+
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <pcl/common/transforms.h>
@@ -19,6 +21,7 @@
 #include <functional>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <memory>
+#include <rclcpp/logging.hpp>
 #include <rclcpp/qos.hpp>
 #include <rclcpp/serialization.hpp>
 #include <rclcpp/serialized_message.hpp>
@@ -28,8 +31,6 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #include <thread>
 #include <vector>
-
-#include "robot_communication/robot_communication.hpp"
 
 #define MAX_PACKET_SIZE 64000
 #define BUFFER_SIZE 65535
@@ -88,21 +89,8 @@ RobotCommunicationNode::~RobotCommunicationNode() {
 
 // initialize the tf from local_map to map
 void RobotCommunicationNode::InitMapTF() {
-  std::string fromFrameRel = "local_map";
-  std::string toFrameRel = "map";
   tf_buffer_ = std::make_shared<tf2_ros::Buffer>(this->get_clock());
   tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
-  geometry_msgs::msg::TransformStamped transformStamped;
-  try {
-    transformStamped = tf_buffer_->lookupTransform(
-      toFrameRel, fromFrameRel, tf2::TimePointZero, tf2::durationFromSec(10.0));
-  } catch (const tf2::TransformException &ex) {
-    RCLCPP_INFO(this->get_logger(), "Could not transform %s to %s: %s",
-                toFrameRel.c_str(), fromFrameRel.c_str(), ex.what());
-    return;
-  }
-  local_to_global =
-    tf2::transformToEigen(transformStamped.transform).matrix().cast<double>();
   tf_update_thread_ =
     std::thread(&RobotCommunicationNode::TFUpdateThread, this);
 }
@@ -144,6 +132,21 @@ void RobotCommunicationNode::RegisteredScanCallBack(
   pcl::PointCloud<pcl::PointXYZI>::Ptr pointcloud_result(
     new pcl::PointCloud<pcl::PointXYZI>());
   pcl::fromROSMsg(*registered_scan_msg, *pointcloud_tmp);
+
+  geometry_msgs::msg::TransformStamped transformStamped;
+  std::string fromFrameRel = "local_map";
+  std::string toFrameRel = "map";
+  try {
+    transformStamped = tf_buffer_->lookupTransform(
+      toFrameRel, fromFrameRel, tf2::TimePointZero, tf2::durationFromSec(10.0));
+  } catch (const tf2::TransformException &ex) {
+    RCLCPP_INFO(this->get_logger(), "Could not transform %s to %s: %s",
+                toFrameRel.c_str(), fromFrameRel.c_str(), ex.what());
+    return;
+  }
+  Eigen::Matrix4d local_to_global =
+    tf2::transformToEigen(transformStamped.transform).matrix().cast<double>();
+
   try {
     pcl::transformPointCloud(*pointcloud_tmp, *pointcloud_result,
                              local_to_global);
@@ -166,19 +169,35 @@ void RobotCommunicationNode::RegisteredScanCallBack(
 }
 
 void RobotCommunicationNode::RealsensePointCallBack(
-  const sensor_msgs::msg::PointCloud2::ConstSharedPtr realsense_pointcloud_msg) {
+  const sensor_msgs::msg::PointCloud2::ConstSharedPtr
+    realsense_pointcloud_msg) {
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr pointcloud_tmp(
     new pcl::PointCloud<pcl::PointXYZRGB>());
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr pointcloud_result(
     new pcl::PointCloud<pcl::PointXYZRGB>());
   pcl::fromROSMsg(*realsense_pointcloud_msg, *pointcloud_tmp);
+
+  std::string fromFrameRel = "camera_depth_optical_frame";
+  std::string toFrameRel = "map";
+  geometry_msgs::msg::TransformStamped transformStamped;
+  try {
+    transformStamped = tf_buffer_->lookupTransform(
+      toFrameRel, fromFrameRel, tf2::TimePointZero, tf2::durationFromSec(10.0));
+  } catch (const tf2::TransformException &ex) {
+    RCLCPP_INFO(this->get_logger(), "Could not transform %s to %s: %s",
+                toFrameRel.c_str(), fromFrameRel.c_str(), ex.what());
+    return;
+  }
+  Eigen::Matrix4d caemra_to_map =
+    tf2::transformToEigen(transformStamped.transform).matrix().cast<double>();
   try {
     pcl::transformPointCloud(*pointcloud_tmp, *pointcloud_result,
-                             local_to_global);
+                             caemra_to_map);
   } catch (const tf2::TransformException &ex) {
     RCLCPP_INFO(this->get_logger(), "%s", ex.what());
     return;
   }
+
   sensor_msgs::msg::PointCloud2 totalRegisteredScan;
   pcl::toROSMsg(*pointcloud_result, totalRegisteredScan);
   totalRegisteredScan.header.stamp = realsense_pointcloud_msg->header.stamp;
@@ -194,10 +213,9 @@ void RobotCommunicationNode::RealsensePointCallBack(
 }
 
 void RobotCommunicationNode::TFUpdateThread() {
-  geometry_msgs::msg::TransformStamped transformStamped;
-  std::vector<uint8_t> data_buffer;
   while (rclcpp::ok()) {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    geometry_msgs::msg::TransformStamped transformStamped;
     try {
       transformStamped = tf_buffer_->lookupTransform(
         "map", "lio_base_link", tf2::TimePointZero, tf2::durationFromSec(10.0));
@@ -206,7 +224,7 @@ void RobotCommunicationNode::TFUpdateThread() {
     }
     transformStamped.child_frame_id =
       "robot_" + std::to_string(robot_id) + "/base_link";
-    data_buffer =
+    std::vector<uint8_t> data_buffer =
       SerializeMsg<geometry_msgs::msg::TransformStamped>(transformStamped);
     PrepareBuffer pthread_buffer = {robot_id, data_buffer, 2};
     if (prepare_buffer_queue.size() >= MAX_BUFFER_QUEUE_SIZE) {

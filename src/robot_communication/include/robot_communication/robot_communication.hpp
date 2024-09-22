@@ -64,7 +64,6 @@ class RobotCommunicationNode : public rclcpp::Node {
 
   std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
   std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
-  Eigen::Matrix4d local_to_global;
 
   void InitMapTF();
   void InitClient();
