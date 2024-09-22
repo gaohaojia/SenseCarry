@@ -45,7 +45,6 @@ def generate_launch_description():
         PythonLaunchDescriptionSource(
             os.path.join(
                 get_package_share_directory("unitree_lidar_ros2"),
-                "launch",
                 "launch.py",
             )
         ),
@@ -78,50 +77,54 @@ def generate_launch_description():
     )
 
     start_fast_lio = GroupAction(
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(
-                os.path.join(
-                    get_package_share_directory("fast_lio"),
-                    "launch",
-                    "mapping_mid360.launch.py",
-                )
+        [
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(
+                    os.path.join(
+                        get_package_share_directory("fast_lio"),
+                        "launch",
+                        "mapping_mid360.launch.py",
+                    )
+                ),
+                condition=LaunchConfigurationEquals("lidar_type", "mid360"),
             ),
-            condition=LaunchConfigurationEquals("lidar_type", "mid360"),
-        ),
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(
-                os.path.join(
-                    get_package_share_directory("fast_lio"),
-                    "launch",
-                    "mapping_unilidar.launch.py",
-                )
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(
+                    os.path.join(
+                        get_package_share_directory("fast_lio"),
+                        "launch",
+                        "mapping_unilidar.launch.py",
+                    )
+                ),
+                condition=LaunchConfigurationEquals("lidar_type", "unilidar"),
             ),
-            condition=LaunchConfigurationEquals("lidar_type", "unilidar"),
-        ),
+        ],
         condition=LaunchConfigurationEquals("lio_mode", "fast_lio"),
     )
 
     start_point_lio = GroupAction(
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(
-                os.path.join(
-                    get_package_share_directory("point_lio"),
-                    "launch",
-                    "mapping_mid360.launch.py",
-                )
+        [
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(
+                    os.path.join(
+                        get_package_share_directory("point_lio"),
+                        "launch",
+                        "mapping_mid360.launch.py",
+                    )
+                ),
+                condition=LaunchConfigurationEquals("lidar_type", "mid360"),
             ),
-            condition=LaunchConfigurationEquals("lidar_type", "mid360"),
-        ),
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(
-                os.path.join(
-                    get_package_share_directory("point_lio"),
-                    "launch",
-                    "mapping_unilidar.launch.py",
-                )
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(
+                    os.path.join(
+                        get_package_share_directory("point_lio"),
+                        "launch",
+                        "mapping_unilidar.launch.py",
+                    )
+                ),
+                condition=LaunchConfigurationEquals("lidar_type", "unilidar"),
             ),
-            condition=LaunchConfigurationEquals("lidar_type", "unilidar"),
-        ),
+        ],
         condition=LaunchConfigurationEquals("lio_mode", "point_lio"),
     )
 
