@@ -5,3 +5,5 @@ src/FAST_LIO/Log/*
 __pycache__
 .cache
 .vscode
+/src/unitree_lidar_ros2
+/src/starros_ros2
