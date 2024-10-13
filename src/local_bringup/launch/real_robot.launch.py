@@ -16,6 +16,7 @@ from launch.conditions import LaunchConfigurationEquals
 
 def generate_launch_description():
     robot_id = LaunchConfiguration("robot_id")
+    lidar_type = LaunchConfiguration("lidar_type")
 
     declare_robot_id = DeclareLaunchArgument(
         "robot_id", default_value="0", description=""
@@ -23,33 +24,48 @@ def generate_launch_description():
     declare_lidar_type = DeclareLaunchArgument(
         "lidar_type", default_value="mid360", description=""
     )
-    declare_lio_mode = DeclareLaunchArgument(
-        "lio_mode", default_value="point_lio", description=""
-    )
-    declare_realsense_mode = DeclareLaunchArgument(
-        "realsense_mode", default_value="rs_d435", description=""
-    )
 
-    start_livox_mid360 = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(
-                get_package_share_directory("livox_ros_driver2"),
-                "launch",
-                "msg_MID360_launch.py",
+    optional_nodes = []
+    try:
+        start_livox_mid360 = IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(
+                os.path.join(
+                    get_package_share_directory("livox_ros_driver2"),
+                    "launch",
+                    "msg_MID360_launch.py",
+                )
             )
-        ),
-        condition=LaunchConfigurationEquals("lidar_type", "mid360"),
-    )
+        )
+        optional_nodes.append(start_livox_mid360)
+    except:
+        print("Not found livox_ros_driver2 package.")
 
-    start_unilidar_lidar = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(
-                get_package_share_directory("unitree_lidar_ros2"),
-                "launch.py",
+    try:
+        start_unilidar_lidar = IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(
+                os.path.join(
+                    get_package_share_directory("unitree_lidar_ros2"),
+                    "launch.py",
+                )
             )
-        ),
-        condition=LaunchConfigurationEquals("lidar_type", "unilidar"),
-    )
+        )
+        optional_nodes.append(start_unilidar_lidar)
+    except:
+        print("Not found unitree_lidar_ros2 package.")
+
+    try:
+        start_starros_lidar = IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(
+                os.path.join(
+                    get_package_share_directory("starros"),
+                    "launch",
+                    "Dome.launch.py"
+                )
+            )
+        )
+        optional_nodes.append(start_starros_lidar)
+    except:
+        print("Not found starros package.")
 
     try:
         start_realsense = IncludeLaunchDescription(
@@ -61,10 +77,10 @@ def generate_launch_description():
                 )
             ),
             launch_arguments={"pointcloud.enable": "true"}.items(),
-            condition=LaunchConfigurationEquals("realsense_mode", "rs_d435"),
         )
+        optional_nodes.append(start_realsense)
     except:
-        pass
+        print("Not found realsense2_camera package.")
 
     start_lidar_transform = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
@@ -76,56 +92,17 @@ def generate_launch_description():
         )
     )
 
-    start_fast_lio = GroupAction(
-        [
-            IncludeLaunchDescription(
-                PythonLaunchDescriptionSource(
-                    os.path.join(
-                        get_package_share_directory("fast_lio"),
-                        "launch",
-                        "mapping_mid360.launch.py",
-                    )
-                ),
-                condition=LaunchConfigurationEquals("lidar_type", "mid360"),
-            ),
-            IncludeLaunchDescription(
-                PythonLaunchDescriptionSource(
-                    os.path.join(
-                        get_package_share_directory("fast_lio"),
-                        "launch",
-                        "mapping_unilidar.launch.py",
-                    )
-                ),
-                condition=LaunchConfigurationEquals("lidar_type", "unilidar"),
-            ),
-        ],
-        condition=LaunchConfigurationEquals("lio_mode", "fast_lio"),
-    )
-
-    start_point_lio = GroupAction(
-        [
-            IncludeLaunchDescription(
-                PythonLaunchDescriptionSource(
-                    os.path.join(
-                        get_package_share_directory("point_lio"),
-                        "launch",
-                        "mapping_mid360.launch.py",
-                    )
-                ),
-                condition=LaunchConfigurationEquals("lidar_type", "mid360"),
-            ),
-            IncludeLaunchDescription(
-                PythonLaunchDescriptionSource(
-                    os.path.join(
-                        get_package_share_directory("point_lio"),
-                        "launch",
-                        "mapping_unilidar.launch.py",
-                    )
-                ),
-                condition=LaunchConfigurationEquals("lidar_type", "unilidar"),
-            ),
-        ],
-        condition=LaunchConfigurationEquals("lio_mode", "point_lio"),
+    start_point_lio = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(
+                get_package_share_directory("point_lio"),
+                "launch",
+                "point_lio.launch.py",
+            )
+        ),
+        launch_arguments={
+            "lidar_type": lidar_type,
+        }.items(),
     )
 
     start_robot_communication = IncludeLaunchDescription(
@@ -158,17 +135,10 @@ def generate_launch_description():
     # Add the actions
     ld.add_action(declare_robot_id)
     ld.add_action(declare_lidar_type)
-    ld.add_action(declare_lio_mode)
-    ld.add_action(declare_realsense_mode)
 
-    try:
-        ld.add_action(start_realsense)
-    except:
-        pass
-    ld.add_action(start_livox_mid360)
-    ld.add_action(start_unilidar_lidar)
+    for node in optional_nodes:
+        ld.add_action(node)
     ld.add_action(start_lidar_transform)
-    ld.add_action(start_fast_lio)
     ld.add_action(start_point_lio)
     ld.add_action(TimerAction(period=10.0, actions=[start_robot_communication]))
     ld.add_action(TimerAction(period=8.0, actions=[start_rviz]))
