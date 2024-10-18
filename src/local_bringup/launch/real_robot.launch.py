@@ -16,10 +16,14 @@ from launch.conditions import LaunchConfigurationEquals
 
 def generate_launch_description():
     robot_id = LaunchConfiguration("robot_id")
+    robot_type = LaunchConfiguration("robot_type")
     lidar_type = LaunchConfiguration("lidar_type")
 
     declare_robot_id = DeclareLaunchArgument(
         "robot_id", default_value="0", description=""
+    )
+    declare_robot_type = DeclareLaunchArgument(
+        "robot_type", default_value="simulated", description=""
     )
     declare_lidar_type = DeclareLaunchArgument(
         "lidar_type", default_value="mid360", description=""
@@ -89,7 +93,10 @@ def generate_launch_description():
                 "launch",
                 "lidar_transform.launch.py",
             )
-        )
+        ),
+        launch_arguments={
+            "robot_type": robot_type,
+        }.items(),
     )
 
     start_point_lio = IncludeLaunchDescription(
@@ -134,6 +141,7 @@ def generate_launch_description():
 
     # Add the actions
     ld.add_action(declare_robot_id)
+    ld.add_action(declare_robot_type)
     ld.add_action(declare_lidar_type)
 
     for node in optional_nodes:
